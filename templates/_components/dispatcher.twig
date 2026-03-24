@@ -7,8 +7,7 @@
   {# Prevent infinite recursion with nested Entries fields #}
   {% if depth > 3 %}
     <div class="alert alert-danger">Recursion depth limit reached.</div>
-    {% return %}
-  {% endif %}
+  {% else %}
 
   {% set layout = entry.getType().getFieldLayout() %}
   {% set tabs = layout.getTabs() %}
@@ -147,4 +146,5 @@
       </div>
     {% endfor %}
   </div>
+  {% endif %}
 {% endmacro %}
