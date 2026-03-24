@@ -2,7 +2,7 @@
 namespace modules\crmmodule;
 
 use Craft;
-use craft\base\Module;
+use yii\base\Module;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
 use yii\base\Event;
