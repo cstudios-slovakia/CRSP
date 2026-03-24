@@ -59,6 +59,7 @@
 
                 {% elseif classType == 'craft\\fieldlayoutelements\\CustomField' %}
                   {% set field = element.getField() %}
+                  {% if field %}
                   {% set fieldClass = className(field) %}
                   {% set value = entry.getFieldValue(field.handle) %}
                   
@@ -136,6 +137,7 @@
                       </div>
                     {% endif %}
                   </div>
+                  {% endif %}
 
                 {% endif %}
               </div>
