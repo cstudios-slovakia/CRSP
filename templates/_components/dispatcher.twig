@@ -1,0 +1,150 @@
+{#
+  Dispatcher Macro
+  Renders Craft CMS Field Layouts dynamically using Bootstrap 5 and HTMX.
+#}
+
+{% macro renderLayout(entry, depth = 0) %}
+  {# Prevent infinite recursion with nested Entries fields #}
+  {% if depth > 3 %}
+    <div class="alert alert-danger">Recursion depth limit reached.</div>
+    {% return %}
+  {% endif %}
+
+  {% set layout = entry.getType().getFieldLayout() %}
+  {% set tabs = layout.getTabs() %}
+
+  {% if tabs|length > 1 %}
+    {# Render Bootstrap Nav Tabs #}
+    <ul class="nav nav-tabs mb-4" id="entryTabs-{{ entry.id }}" role="tablist">
+      {% for tab in tabs %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ tab.id }}" data-bs-toggle="tab" data-bs-target="#tab-pane-{{ tab.id }}" type="button" role="tab" aria-controls="tab-pane-{{ tab.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}">
+            {{ tab.name }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <div class="tab-content" id="entryTabContent-{{ entry.id }}">
+    {% for tab in tabs %}
+      <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="tab-pane-{{ tab.id }}" role="tabpanel" aria-labelledby="tab-{{ tab.id }}" tabindex="0">
+        
+        <div class="row g-3">
+          {% for element in tab.getElements() %}
+            {# Enforce Craft's native RBAC and conditional field logic #}
+            {% if element.isVisible(entry) %}
+              {% set classType = className(element) %}
+              {% set widthClass = 'col-12' %}
+              {% if element.width and element.width < 100 %}
+                {% set widthClass = 'col-md-' ~ (element.width / 100 * 12)|round %}
+              {% endif %}
+
+              <div class="{{ widthClass }} mb-3">
+                {% if classType == 'craft\\fieldlayoutelements\\Tip' or classType == 'craft\\fieldlayoutelements\\Warning' %}
+                  {% set alertClass = classType == 'craft\\fieldlayoutelements\\Warning' ? 'alert-warning' : 'alert-info' %}
+                  <div class="alert {{ alertClass }} d-flex align-items-center" role="alert">
+                    <div>
+                      {{ element.getHtml(entry)|raw }}
+                    </div>
+                  </div>
+
+                {% elseif classType == 'craft\\fieldlayoutelements\\Heading' %}
+                  <h3 class="mt-4 mb-2">{{ element.heading }}</h3>
+
+                {% elseif classType == 'craft\\fieldlayoutelements\\LineBreak' %}
+                  <br>
+
+                {% elseif classType == 'craft\\fieldlayoutelements\\HorizontalRule' %}
+                  <hr>
+
+                {% elseif classType == 'craft\\fieldlayoutelements\\CustomField' %}
+                  {% set field = element.getField() %}
+                  {% set fieldClass = className(field) %}
+                  {% set value = entry.getFieldValue(field.handle) %}
+                  
+                  <div class="form-group">
+                    <label class="form-label fw-bold" for="fields-{{ field.handle }}">
+                      {{ field.name }}
+                      {% if element.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    
+                    {% if element.instructions %}
+                      <div class="form-text mb-2">{{ element.instructions|t('site') }}</div>
+                    {% endif %}
+
+                    {# Text/Plain Field #}
+                    {% if fieldClass == 'craft\\fields\\PlainText' or fieldClass == 'craft\\fields\\Email' or fieldClass == 'craft\\fields\\Url' or fieldClass == 'craft\\fields\\Number' %}
+                      {% set inputType = 'text' %}
+                      {% if fieldClass == 'craft\\fields\\Email' %}{% set inputType = 'email' %}{% endif %}
+                      {% if fieldClass == 'craft\\fields\\Url' %}{% set inputType = 'url' %}{% endif %}
+                      {% if fieldClass == 'craft\\fields\\Number' %}{% set inputType = 'number' %}{% endif %}
+                      
+                      <input type="{{ inputType }}" 
+                             id="fields-{{ field.handle }}" 
+                             name="fields[{{ field.handle }}]" 
+                             class="form-control {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
+                             value="{{ value }}"
+                             {% if element.required %}required{% endif %}>
+                      
+                      {% if entry.hasErrors(field.handle) %}
+                        <div class="invalid-feedback d-block">
+                          {{ entry.getErrors(field.handle)|join(', ') }}
+                        </div>
+                      {% endif %}
+
+                    {# Entries Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Entries' %}
+                      {% set displayMode = element.viewMode ?? 'list' %}
+                      
+                      {% if displayMode == 'cards' or displayMode == 'cards-grid' %}
+                        <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
+                          {% for relatedEntry in value.all() %}
+                            <div class="col">
+                              <div class="card h-100 position-relative">
+                                {# Slideout trigger for editing entry #}
+                                {% include "_components/slideout" with { entry: relatedEntry } %}
+                                
+                                <div class="card-body">
+                                  <h5 class="card-title pr-4">{{ relatedEntry.title }}</h5>
+                                  <div class="card-text">
+                                    {{ _self.renderLayout(relatedEntry, depth + 1) }}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      {% else %}
+                        <ul class="list-group mt-1">
+                          {% for relatedEntry in value.all() %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                              <div class="ms-2 me-auto">
+                                <div class="fw-bold">{{ relatedEntry.title }}</div>
+                                {# Basic display for list text #}
+                              </div>
+                              {# Slideout trigger #}
+                              {% include "_components/slideout" with { entry: relatedEntry, isList: true } %}
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+
+                    {# Fallback #}
+                    {% else %}
+                      <div class="alert alert-secondary mt-1">
+                        <small>Unsupported field type: {{ fieldClass }} (Handle: {{ field.handle }})</small>
+                      </div>
+                    {% endif %}
+                  </div>
+
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}

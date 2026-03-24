@@ -1,0 +1,42 @@
+{#
+  Slideout Trigger & Offcanvas Container
+  Requires `entry` variable. 
+  If `isList` is true, renders a smaller button suitable for lists.
+#}
+
+{% set isList = isList ?? false %}
+
+{# The Trigger Button #}
+<button type="button" 
+        class="btn {% if isList %}btn-sm btn-outline-secondary{% else %}btn-light btn-sm position-absolute top-0 end-0 m-2{% endif %}" 
+        data-bs-toggle="offcanvas" 
+        data-bs-target="#editOffcanvas-{{ entry.id }}" 
+        aria-controls="editOffcanvas-{{ entry.id }}"
+        hx-get="/api/get-form?entryId={{ entry.id }}"
+        hx-target="#offcanvasBody-{{ entry.id }}"
+        hx-swap="innerHTML"
+        hx-indicator="#spinner-{{ entry.id }}"
+        title="Edit {{ entry.title }}">
+  <i class="bi bi-pencil"></i> {% if isList %}Edit{% endif %}
+</button>
+
+{# The Offcanvas Container #}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editOffcanvas-{{ entry.id }}" aria-labelledby="editOffcanvasLabel-{{ entry.id }}">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="editOffcanvasLabel-{{ entry.id }}">Edit Entry #{{ entry.id }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body" id="offcanvasBody-{{ entry.id }}">
+    
+    {# Loading Indicator #}
+    <div id="spinner-{{ entry.id }}" class="htmx-indicator text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading form...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading form...</p>
+    </div>
+    
+    {# Content will be injected here via HTMX #}
+    
+  </div>
+</div>
