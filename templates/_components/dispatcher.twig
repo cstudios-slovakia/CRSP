@@ -4,6 +4,7 @@
 #}
 
 {% macro renderLayout(entry, depth = 0) %}
+  {% import _self as self %}
   {# Prevent infinite recursion with nested Entries fields #}
   {% if depth > 3 %}
     <div class="alert alert-danger">Recursion depth limit reached.</div>
@@ -107,7 +108,7 @@
                                 <div class="card-body">
                                   <h5 class="card-title pr-4">{{ relatedEntry.title }}</h5>
                                   <div class="card-text">
-                                    {{ _self.renderLayout(relatedEntry, depth + 1) }}
+                                    {{ self.renderLayout(relatedEntry, depth + 1) }}
                                   </div>
                                 </div>
                               </div>
