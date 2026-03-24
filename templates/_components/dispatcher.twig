@@ -31,8 +31,7 @@
         
         <div class="row g-3">
           {% for element in tab.getElements() %}
-            {# Enforce Craft's native RBAC and conditional field logic #}
-            {% if element.isVisible(entry) %}
+            {% if element and element.isVisible(entry) %}
               {% set classType = className(element) %}
               {% set widthClass = 'col-12' %}
               {% if element.width and element.width < 100 %}
