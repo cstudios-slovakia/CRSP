@@ -32,7 +32,7 @@
         
         <div class="row g-3">
           {% for element in tab.getElements() %}
-            {% if element and element.isVisible(entry) %}
+            {% if element %}
               {% set classType = className(element) %}
               {% set widthClass = 'col-12' %}
 
@@ -41,19 +41,18 @@
                   {% set alertClass = classType == 'craft\\fieldlayoutelements\\Warning' ? 'alert-warning' : 'alert-info' %}
                   <div class="alert {{ alertClass }} d-flex align-items-center" role="alert">
                     <div>
-                      {{ element.getHtml(entry)|raw }}
+                      [Tip/Warning Stubbed]
                     </div>
                   </div>
 
                 {% elseif classType == 'craft\\fieldlayoutelements\\Heading' %}
-                  <h3 class="mt-4 mb-2">{{ element.heading }}</h3>
+                  <h3 class="mt-4 mb-2">[Heading Stubbed]</h3>
 
                 {% elseif classType == 'craft\\fieldlayoutelements\\LineBreak' %}
                   <br>
 
                 {% elseif classType == 'craft\\fieldlayoutelements\\CustomField' %}
-                  {% set field = element.getField() %}
-                  <div class="alert alert-secondary">Custom field stubbed {{ field ? className(field) : 'no field' }}.</div>
+                  <div class="alert alert-secondary">Custom field stubbed. (getField bypassed)</div>
 
                 {% elseif classType == 'craft\\fieldlayoutelements\\HorizontalRule' %}
                   <hr>
