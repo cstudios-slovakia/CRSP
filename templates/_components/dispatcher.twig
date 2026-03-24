@@ -145,11 +145,12 @@
                           {% set isSelected = false %}
                           {% if value %}
                             {% if fieldClass == 'craft\\fields\\MultiSelect' %}
-                              {% for val in value %}
-                                {% if val.value == option.value %}{% set isSelected = true %}{% endif %}
+                              {% set iterableValue = value|length ? value : [] %}
+                              {% for val in iterableValue %}
+                                {% if val.value is defined and val.value == option.value %}{% set isSelected = true %}{% endif %}
                               {% endfor %}
                             {% else %}
-                              {% if value.value == option.value %}{% set isSelected = true %}{% endif %}
+                              {% if value.value is defined and value.value == option.value %}{% set isSelected = true %}{% endif %}
                             {% endif %}
                           {% endif %}
                           <option value="{{ option.value }}" {% if isSelected %}selected{% endif %}>{{ option.label }}</option>
@@ -161,7 +162,7 @@
                       <div class="mt-2">
                         {% for option in field.options %}
                           <div class="form-check">
-                            <input class="form-check-input" type="radio" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" value="{{ option.value }}" {% if value and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
+                            <input class="form-check-input" type="radio" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" value="{{ option.value }}" {% if value and value.value is defined and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
                             <label class="form-check-label" for="fields-{{ field.handle }}-{{ loop.index }}">
                               {{ option.label }}
                             </label>
@@ -175,8 +176,9 @@
                         {% for option in field.options %}
                           {% set isChecked = false %}
                           {% if value %}
-                            {% for val in value %}
-                              {% if val.value == option.value %}{% set isChecked = true %}{% endif %}
+                            {% set iterableValue = value|length ? value : [] %}
+                            {% for val in iterableValue %}
+                              {% if val.value is defined and val.value == option.value %}{% set isChecked = true %}{% endif %}
                             {% endfor %}
                           {% endif %}
                           <div class="form-check">
@@ -192,17 +194,18 @@
                     {% elseif fieldClass == 'craft\\fields\\ButtonGroup' %}
                       <div class="btn-group mt-2" role="group" aria-label="{{ field.name }}">
                         {% for option in field.options %}
-                          <input type="radio" class="btn-check" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" autocomplete="off" value="{{ option.value }}" {% if value and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
+                          <input type="radio" class="btn-check" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" autocomplete="off" value="{{ option.value }}" {% if value and value.value is defined and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
                           <label class="btn btn-outline-primary" for="fields-{{ field.handle }}-{{ loop.index }}">{{ option.label }}</label>
                         {% endfor %}
                       </div>
 
                     {# Date Field #}
                     {% elseif fieldClass == 'craft\\fields\\Date' %}
-                      {% set dateType = field.showTime ? 'datetime-local' : 'date' %}
+                      {% set hasTime = field.showTime is defined ? field.showTime : false %}
+                      {% set dateType = hasTime ? 'datetime-local' : 'date' %}
                       {% set dateValue = '' %}
                       {% if value %}
-                        {% set dateValue = field.showTime ? value|date('Y-m-d\\TH:i') : value|date('Y-m-d') %}
+                        {% set dateValue = hasTime ? value|date('Y-m-d\\TH:i') : value|date('Y-m-d') %}
                       {% endif %}
                       <input type="{{ dateType }}" 
                              id="fields-{{ field.handle }}" 
@@ -217,15 +220,16 @@
                              id="fields-{{ field.handle }}" 
                              name="fields[{{ field.handle }}]" 
                              class="form-control form-control-color {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
-                             value="{{ value.hex ?? value ?? '#000000' }}"
+                             value="{{ value|default('#000000') }}"
                              title="Choose your color"
                              {% if element.required %}required{% endif %}>
 
                     {# Asset Field #}
                     {% elseif fieldClass == 'craft\\fields\\Assets' %}
-                      {% if value and value.count() %}
+                      {% set assetsArray = value is iterable ? value : (value and value.all is defined ? value.all() : []) %}
+                      {% if assetsArray|length %}
                         <ul class="list-group mb-2">
-                          {% for asset in value.all() %}
+                          {% for asset in assetsArray %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                               <div>
                                 {% if asset.kind == 'image' %}
@@ -244,8 +248,9 @@
                              id="fields-{{ field.handle }}" 
                              name="fields[{{ field.handle }}][]" 
                              class="form-control {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
-                             {% if field.maxFiles != 1 %}multiple{% endif %}
-                             {% if element.required and (not value or not value.count()) %}required{% endif %}>
+                             {% set isMultiple = field.maxRelations is defined ? field.maxRelations != 1 : true %}
+                             {% if isMultiple %}multiple{% endif %}
+                             {% if element.required and not assetsArray|length %}required{% endif %}>
                       <div class="form-text">Uploading new files will replace existing ones on save.</div>
 
                     {# Rich Text (CKEditor / Redactor) #}
