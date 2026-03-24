@@ -31,8 +31,11 @@
       <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="tab-pane-{{ tab.id }}" role="tabpanel" aria-labelledby="tab-{{ tab.id }}" tabindex="0">
         
         <div class="row g-3">
-          {# LOOP DISABLED FOR ISOLATION #}
-          <div class="alert alert-info">Layout loop disabled for debugging.</div>
+          {% for element in tab.getElements() %}
+            <div class="mb-3 border p-2">
+               Element: {{ className(element) ?? 'Unknown Class' }}
+            </div>
+          {% endfor %}
         </div>
         
       </div>
