@@ -51,10 +51,12 @@
                 {% elseif classType == 'craft\\fieldlayoutelements\\LineBreak' %}
                   <br>
 
+                {% elseif classType == 'craft\\fieldlayoutelements\\CustomField' %}
+                  {% set field = element.getField() %}
+                  <div class="alert alert-secondary">Custom field stubbed {{ field ? className(field) : 'no field' }}.</div>
+
                 {% elseif classType == 'craft\\fieldlayoutelements\\HorizontalRule' %}
                   <hr>
-
-                  <div class="alert alert-secondary">Custom field stubbed {{ className(field) ?? 'no field' }}.</div>
 
                 {% endif %}
               </div>
