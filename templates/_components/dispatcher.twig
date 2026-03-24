@@ -128,6 +128,134 @@
                         </ul>
                       {% endif %}
 
+                    {# Lightswitch Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Lightswitch' %}
+                      <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="fields-{{ field.handle }}" name="fields[{{ field.handle }}]" value="1" {% if value %}checked{% endif %}>
+                        <label class="form-check-label" for="fields-{{ field.handle }}">Enable</label>
+                      </div>
+
+                    {# Select Fields (Dropdown / MultiSelect) #}
+                    {% elseif fieldClass == 'craft\\fields\\Dropdown' or fieldClass == 'craft\\fields\\MultiSelect' %}
+                      <select class="form-select" id="fields-{{ field.handle }}" name="fields[{{ field.handle }}]{% if fieldClass == 'craft\\fields\\MultiSelect' %}[]{% endif %}" {% if fieldClass == 'craft\\fields\\MultiSelect' %}multiple{% endif %} {% if element.required %}required{% endif %}>
+                        {% if not element.required and fieldClass == 'craft\\fields\\Dropdown' %}
+                          <option value="">{{ field.emptyOptionLabel|default('Select an option') }}</option>
+                        {% endif %}
+                        {% for option in field.options %}
+                          {% set isSelected = false %}
+                          {% if value %}
+                            {% if fieldClass == 'craft\\fields\\MultiSelect' %}
+                              {% for val in value %}
+                                {% if val.value == option.value %}{% set isSelected = true %}{% endif %}
+                              {% endfor %}
+                            {% else %}
+                              {% if value.value == option.value %}{% set isSelected = true %}{% endif %}
+                            {% endif %}
+                          {% endif %}
+                          <option value="{{ option.value }}" {% if isSelected %}selected{% endif %}>{{ option.label }}</option>
+                        {% endfor %}
+                      </select>
+
+                    {# Radio Buttons #}
+                    {% elseif fieldClass == 'craft\\fields\\RadioButtons' %}
+                      <div class="mt-2">
+                        {% for option in field.options %}
+                          <div class="form-check">
+                            <input class="form-check-input" type="radio" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" value="{{ option.value }}" {% if value and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
+                            <label class="form-check-label" for="fields-{{ field.handle }}-{{ loop.index }}">
+                              {{ option.label }}
+                            </label>
+                          </div>
+                        {% endfor %}
+                      </div>
+
+                    {# Checkboxes #}
+                    {% elseif fieldClass == 'craft\\fields\\Checkboxes' %}
+                      <div class="mt-2">
+                        {% for option in field.options %}
+                          {% set isChecked = false %}
+                          {% if value %}
+                            {% for val in value %}
+                              {% if val.value == option.value %}{% set isChecked = true %}{% endif %}
+                            {% endfor %}
+                          {% endif %}
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields[{{ field.handle }}][]" value="{{ option.value }}" id="fields-{{ field.handle }}-{{ loop.index }}" {% if isChecked %}checked{% endif %}>
+                            <label class="form-check-label" for="fields-{{ field.handle }}-{{ loop.index }}">
+                              {{ option.label }}
+                            </label>
+                          </div>
+                        {% endfor %}
+                      </div>
+
+                    {# Button Group #}
+                    {% elseif fieldClass == 'craft\\fields\\ButtonGroup' %}
+                      <div class="btn-group mt-2" role="group" aria-label="{{ field.name }}">
+                        {% for option in field.options %}
+                          <input type="radio" class="btn-check" name="fields[{{ field.handle }}]" id="fields-{{ field.handle }}-{{ loop.index }}" autocomplete="off" value="{{ option.value }}" {% if value and value.value == option.value %}checked{% endif %} {% if element.required and loop.first %}required{% endif %}>
+                          <label class="btn btn-outline-primary" for="fields-{{ field.handle }}-{{ loop.index }}">{{ option.label }}</label>
+                        {% endfor %}
+                      </div>
+
+                    {# Date Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Date' %}
+                      {% set dateType = field.showTime ? 'datetime-local' : 'date' %}
+                      {% set dateValue = '' %}
+                      {% if value %}
+                        {% set dateValue = field.showTime ? value|date('Y-m-d\\TH:i') : value|date('Y-m-d') %}
+                      {% endif %}
+                      <input type="{{ dateType }}" 
+                             id="fields-{{ field.handle }}" 
+                             name="fields[{{ field.handle }}]" 
+                             class="form-control {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
+                             value="{{ dateValue }}"
+                             {% if element.required %}required{% endif %}>
+
+                    {# Color Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Color' %}
+                      <input type="color" 
+                             id="fields-{{ field.handle }}" 
+                             name="fields[{{ field.handle }}]" 
+                             class="form-control form-control-color {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
+                             value="{{ value.hex ?? value ?? '#000000' }}"
+                             title="Choose your color"
+                             {% if element.required %}required{% endif %}>
+
+                    {# Asset Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Assets' %}
+                      {% if value and value.count() %}
+                        <ul class="list-group mb-2">
+                          {% for asset in value.all() %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                              <div>
+                                {% if asset.kind == 'image' %}
+                                  <img src="{{ asset.getUrl() }}" alt="{{ asset.title }}" class="img-thumbnail me-2" style="max-height: 40px;">
+                                {% else %}
+                                  <i class="bi bi-file-earmark me-2"></i>
+                                {% endif %}
+                                {{ asset.title }}
+                              </div>
+                              <span class="badge text-bg-secondary rounded-pill">{{ asset.size|filesize }}</span>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+                      <input type="file" 
+                             id="fields-{{ field.handle }}" 
+                             name="fields[{{ field.handle }}][]" 
+                             class="form-control {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
+                             {% if field.maxFiles != 1 %}multiple{% endif %}
+                             {% if element.required and (not value or not value.count()) %}required{% endif %}>
+                      <div class="form-text">Uploading new files will replace existing ones on save.</div>
+
+                    {# Rich Text (CKEditor / Redactor) #}
+                    {% elseif fieldClass == 'craft\\ckeditor\\Field' or fieldClass == 'craft\\redactor\\Field' %}
+                      <textarea id="fields-{{ field.handle }}" 
+                                name="fields[{{ field.handle }}]" 
+                                class="form-control richtext {% if entry.hasErrors(field.handle) %}is-invalid{% endif %}"
+                                rows="6"
+                                {% if element.required %}required{% endif %}>{{ value }}</textarea>
+
                     {# Fallback #}
                     {% else %}
                       <div class="alert alert-secondary mt-1">
