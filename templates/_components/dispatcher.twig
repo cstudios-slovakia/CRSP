@@ -91,20 +91,21 @@
                         </div>
                       {% endif %}
 
-                    {# Entries Field #}
-                    {% elseif fieldClass == 'craft\\fields\\Entries' %}
+                    {# Entries, ContentBlock & Matrix Fields #}
+                    {% elseif fieldClass == 'craft\\fields\\Entries' or fieldClass == 'craft\\fields\\ContentBlock' or fieldClass == 'craft\\fields\\Matrix' %}
                       {% set displayMode = 'list' %}
+                      {% set queryItems = value and value.all is defined ? value.all() : (value is iterable ? value : []) %}
                       
                       {% if displayMode == 'cards' or displayMode == 'cards-grid' %}
                         <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                          {% for relatedEntry in value.all() %}
+                          {% for relatedEntry in queryItems %}
                             <div class="col">
                               <div class="card h-100 position-relative">
                                 {# Slideout trigger for editing entry #}
-                                {% include "_components/slideout" with { entry: relatedEntry } %}
+                                {% include "_components/slideout" ignore missing with { entry: relatedEntry } %}
                                 
                                 <div class="card-body">
-                                  <h5 class="card-title pr-4">{{ relatedEntry.title }}</h5>
+                                  <h5 class="card-title pr-4">{{ relatedEntry.title ?? 'Item ' ~ loop.index }}</h5>
                                   <div class="card-text">
                                     {{ self.renderLayout(relatedEntry, depth + 1) }}
                                   </div>
@@ -115,14 +116,14 @@
                         </div>
                       {% else %}
                         <ul class="list-group mt-1">
-                          {% for relatedEntry in value.all() %}
+                          {% for relatedEntry in queryItems %}
                             <li class="list-group-item d-flex justify-content-between align-items-start">
-                              <div class="ms-2 me-auto">
-                                <div class="fw-bold">{{ relatedEntry.title }}</div>
-                                {# Basic display for list text #}
+                              <div class="ms-2 me-auto w-100">
+                                <div class="fw-bold mb-2">{{ relatedEntry.title ?? 'Item ' ~ loop.index }}</div>
+                                {{ self.renderLayout(relatedEntry, depth + 1) }}
                               </div>
                               {# Slideout trigger #}
-                              {% include "_components/slideout" with { entry: relatedEntry, isList: true } %}
+                              {% include "_components/slideout" ignore missing with { entry: relatedEntry, isList: true } %}
                             </li>
                           {% endfor %}
                         </ul>
