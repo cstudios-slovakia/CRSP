@@ -95,10 +95,29 @@
                         </div>
                       {% endif %}
 
-                    {# Entries, ContentBlock & Matrix Fields #}
-                    {% elseif fieldClass == 'craft\\fields\\Entries' or fieldClass == 'craft\\fields\\ContentBlock' or fieldClass == 'craft\\fields\\Matrix' %}
+                    {# ContentBlock & Matrix Fields #}
+                    {% elseif fieldClass == 'craft\\fields\\ContentBlock' or fieldClass == 'craft\\fields\\Matrix' %}
+                      {% set queryItems = value and value.all is defined ? value.all() : [] %}
+                      <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
+                        {% for relatedEntry in queryItems %}
+                          <div class="col">
+                            <div class="card h-100 position-relative">
+                              <div class="card-body">
+                                <h5 class="card-title pr-4">Block ({{ relatedEntry.title ?? 'No title' }})</h5>
+                                <div class="card-text">
+                                  {# TEMPORARILY DISABLED RECURSION TO PREVENT TWIG CRASH #}
+                                  <div class="alert alert-info">Nested block rendering temporarily disabled for debugging.</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+
+                    {# Entries Field #}
+                    {% elseif fieldClass == 'craft\\fields\\Entries' %}
                       {% set displayMode = 'list' %}
-                      {% set queryItems = value and value.all is defined ? value.all() : (value is iterable ? value : []) %}
+                      {% set queryItems = value and value.all is defined ? value.all() : [] %}
                       
                       {% if displayMode == 'cards' or displayMode == 'cards-grid' %}
                         <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
