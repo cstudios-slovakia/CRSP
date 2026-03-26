@@ -8,9 +8,13 @@
   {# Prevent infinite recursion with nested Entries fields #}
   {% if depth > 3 %}
     <div class="alert alert-danger">Recursion depth limit reached.</div>
+  {% elseif entry is not defined or not entry %}
+    <!-- Empty element passed to renderLayout -->
+  {% elseif getattr(entry, 'getFieldLayout', null) is null and entry.getFieldLayout is not defined %}
+    <div class="alert alert-warning">Unable to render layout: Component does not support field layouts.</div>
   {% else %}
 
-  {% set layout = entry.getType().getFieldLayout() %}
+  {% set layout = entry.getFieldLayout() %}
   {% set tabs = layout.getTabs() %}
 
   {% if tabs|length > 1 %}
