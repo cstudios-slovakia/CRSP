@@ -10,7 +10,7 @@
     <div class="alert alert-danger">Recursion depth limit reached.</div>
   {% elseif entry is not defined or not entry %}
     <!-- Empty element passed to renderLayout -->
-  {% elseif getattr(entry, 'getFieldLayout', null) is null and entry.getFieldLayout is not defined %}
+  {% elseif entry.getFieldLayout is not defined %}
     <div class="alert alert-warning">Unable to render layout: Component does not support field layouts.</div>
   {% else %}
 
