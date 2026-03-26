@@ -36,7 +36,8 @@
         
         <div class="row g-3">
           {% for element in tab.getElements() %}
-            {% if element %}
+            {# MANDATORY: Wrap element in isVisible rule #}
+            {% if element and element.isVisible(entry) %}
               {% set classType = className(element) %}
               {% set widthClass = 'col-12' %}
 
@@ -125,7 +126,7 @@
                             <div class="col">
                               <div class="card h-100 position-relative">
                                 {# Slideout trigger for editing entry #}
-                                {% include "_components/slideout" ignore missing with { entry: relatedEntry } %}
+                                {% include "_components/slideout" with { entry: relatedEntry } %}
                                 
                                 <div class="card-body">
                                   <h5 class="card-title pr-4">{{ relatedEntry.title ?? 'Item ' ~ loop.index }}</h5>
@@ -146,7 +147,7 @@
                                 {{ self.renderLayout(relatedEntry, depth + 1) }}
                               </div>
                               {# Slideout trigger #}
-                              {% include "_components/slideout" ignore missing with { entry: relatedEntry, isList: true } %}
+                              {% include "_components/slideout" with { entry: relatedEntry, isList: true } %}
                             </li>
                           {% endfor %}
                         </ul>

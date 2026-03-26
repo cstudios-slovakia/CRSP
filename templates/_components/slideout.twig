@@ -1,42 +1,70 @@
-{#
-  Slideout Trigger & Offcanvas Container
-  Requires `entry` variable. 
-  If `isList` is true, renders a smaller button suitable for lists.
+{# 
+  Slideout Trigger & Offcanvas 
+  Expects: `entry` (Craft Entry object)
+  Optional: `isList` (Boolean, adjusts styling if rendered in a list vs card)
 #}
 
-{% set isList = isList ?? false %}
+{% set uniqueId = 'offcanvas-' ~ (entry.id ?? random()) %}
 
 {# The Trigger Button #}
-<button type="button" 
-        class="btn {% if isList %}btn-sm btn-outline-secondary{% else %}btn-light btn-sm position-absolute top-0 end-0 m-2{% endif %}" 
-        data-bs-toggle="offcanvas" 
-        data-bs-target="#editOffcanvas-{{ entry.id }}" 
-        aria-controls="editOffcanvas-{{ entry.id }}"
-        hx-get="/api/get-form?entryId={{ entry.id }}"
-        hx-target="#offcanvasBody-{{ entry.id }}"
-        hx-swap="innerHTML"
-        hx-indicator="#spinner-{{ entry.id }}"
-        title="Edit {{ entry.title }}">
-  <i class="bi bi-pencil"></i> {% if isList %}Edit{% endif %}
-</button>
+{% if isList is defined and isList %}
+    <span class="badge text-bg-primary rounded-pill htmx-edit-trigger" style="cursor:pointer;"
+          data-bs-toggle="offcanvas" 
+          data-bs-target="#{{ uniqueId }}" 
+          aria-controls="{{ uniqueId }}">
+        <i class="bi bi-pencil-fill"></i>
+    </span>
+{% else %}
+    <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 shadow-sm htmx-edit-trigger" 
+            data-bs-toggle="offcanvas" 
+            data-bs-target="#{{ uniqueId }}" 
+            aria-controls="{{ uniqueId }}">
+        <i class="bi bi-pencil-fill"></i>
+    </button>
+{% endif %}
 
 {# The Offcanvas Container #}
-<div class="offcanvas offcanvas-end" tabindex="-1" id="editOffcanvas-{{ entry.id }}" aria-labelledby="editOffcanvasLabel-{{ entry.id }}">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="editOffcanvasLabel-{{ entry.id }}">Edit Entry #{{ entry.id }}</h5>
+<div class="offcanvas offcanvas-end shadow" tabindex="-1" id="{{ uniqueId }}" aria-labelledby="{{ uniqueId }}Label">
+  <div class="offcanvas-header bg-light border-bottom">
+    <h5 class="offcanvas-title fw-bold" id="{{ uniqueId }}Label">
+        Edit {{ entry.title ?? 'Item' }}
+    </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body" id="offcanvasBody-{{ entry.id }}">
-    
-    {# Loading Indicator #}
-    <div id="spinner-{{ entry.id }}" class="htmx-indicator text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading form...</span>
-      </div>
-      <p class="mt-2 text-muted">Loading form...</p>
+  
+  <div class="offcanvas-body">
+    <!-- Loading Indicator -->
+    <div id="spinner-{{ uniqueId }}" class="text-center my-5 htmx-indicator">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
-    
-    {# Content will be injected here via HTMX #}
-    
+
+    <!-- Form Container -->
+    <form action="" 
+          method="post" 
+          hx-post="/admin/actions/entries/save-entry" 
+          hx-encoding="multipart/form-data"
+          hx-swap="outerHTML" 
+          id="form-{{ uniqueId }}">
+          
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="entries/save-entry">
+        <input type="hidden" name="entryId" value="{{ entry.id ?? '' }}">
+        
+        <!-- We load the raw form elements here via HTMX from the FormController -->
+        <div id="fields-{{ uniqueId }}"
+             hx-get="/api/get-form"
+             hx-vals='{"entryId": {{ entry.id | json_encode | raw }} }'
+             hx-trigger="click from:[data-bs-target='#{{ uniqueId }}'] once"
+             hx-target="this"
+             hx-indicator="#spinner-{{ uniqueId }}">
+        </div>
+
+        <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="offcanvas">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
   </div>
 </div>
